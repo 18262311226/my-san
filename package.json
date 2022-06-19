@@ -1,0 +1,29 @@
+{
+  "name": "my-san",
+  "version": "1.0.0",
+  "description": "以百度san框架为案例，模仿一个相差不大的mini版",
+  "main": "index.js",
+  "scripts": {
+    "dev": "webpack serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/18262311226/my-san.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/18262311226/my-san/issues"
+  },
+  "homepage": "https://github.com/18262311226/my-san#readme",
+  "devDependencies": {
+    "@babel/core": "^7.18.5",
+    "@babel/preset-env": "^7.18.2",
+    "babel-loader": "^8.2.5",
+    "html-webpack-plugin": "^5.5.0",
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.9.2"
+  }
+}
