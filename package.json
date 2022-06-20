@@ -4,7 +4,9 @@
   "description": "以百度san框架为案例，模仿一个相差不大的mini版",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack serve"
+    "start": "webpack",
+    "dev": "webpack serve --config ./config/webpack.dev.js",
+    "build": "webpack --config ./config/webpack.prod.js"
   },
   "repository": {
     "type": "git",
