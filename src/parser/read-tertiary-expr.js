@@ -1,33 +1,42 @@
-import { ExprType } from './expr-type.js'
-import { readLogicalOrExpr } from './read-logical-or-expr.js'
+/**
+ * Copyright (c) Baidu Inc. All rights reserved.
+ *
+ * This source code is licensed under the MIT license.
+ * See LICENSE file in the project root for license information.
+ *
+ * @file 读取三元表达式
+ */
+
+import { ExprType } from './expr-type.js';
+import { readLogicalORExpr } from './read-logical-or-expr.js';
+
 /**
  * 读取三元表达式
  *
  * @param {Walker} walker 源码读取对象
  * @return {Object}
  */
+export function readTertiaryExpr(walker) {
+    var conditional = readLogicalORExpr(walker);
+    walker.goUntil();
 
-export function readTertiaryExpr (walker) {
-    let conditional = readLogicalOrExpr(walker)
-    walker.goUntil()
+    if (walker.source.charCodeAt(walker.index) === 63) { // ?
+        walker.index++;
+        var yesExpr = readTertiaryExpr(walker);
+        walker.goUntil();
 
-    if(walker.source.charCodeAt(walker.index) === 63){ //如果是问号？
-        walker.index++
-        let yesExpr = readTertiaryExpr(walker)
-        walker.goUntil()
-
-        if(walker.source.charCodeAt(walker.index) === 58){ //如果是 :
-            walker.index++
+        if (walker.source.charCodeAt(walker.index) === 58) { // :
+            walker.index++;
             return {
-                type: ExprType.TERTIARY, //三元表达式
+                type: ExprType.TERTIARY,
                 segs: [
                     conditional,
                     yesExpr,
                     readTertiaryExpr(walker)
                 ]
-            }
+            };
         }
     }
 
-    return conditional
+    return conditional;
 }

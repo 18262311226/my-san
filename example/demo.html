@@ -10,17 +10,16 @@
     <script src="../dist/main.js"></script>
     <script>
         let obj = new san.Data({
-            name: 'liu'
+            people: {
+                age: 18,
+                name: 'liu',
+                arr: [
+                    1,2,3,4,4
+                ]
+            },
+            age: '18'
         })
-        let value = obj.get({
-            "type": 4,
-            "paths": [
-                {
-                    "type": 1,
-                    "value": "name"
-                }
-            ]
-        })
+        let value = obj.get("people.arr.length")
         console.log(value)
     </script>
 </body>

@@ -1,10 +1,18 @@
-import { ExprType } from './expr-type.js'
-import { readString } from './read-string.js'
-import { readTertiaryExpr } from './read-tertiary-expr.js'
-import { readCall }  from './read-call';
+/**
+ * Copyright (c) Baidu Inc. All rights reserved.
+ *
+ * This source code is licensed under the MIT license.
+ * See LICENSE file in the project root for license information.
+ *
+ * @file 读取一元表达式
+ */
+import { ExprType } from './expr-type.js';
+import {readString } from './read-string.js';
+import { readCall } from './read-call.js';
 import { readParenthesizedExpr } from './read-parenthesized-expr.js';
+import { readTertiaryExpr } from './read-tertiary-expr.js';
 
-function postUnaryExpr (expr, operator) {
+function postUnaryExpr(expr, operator) {
     switch (operator) {
         case 33:
             var value;
@@ -69,19 +77,21 @@ function postUnaryExpr (expr, operator) {
  * @param {Walker} walker 源码读取对象
  * @return {Object}
  */
-export function readUnaryExpr (walker) {
-    walker.goUntil()
+export function readUnaryExpr(walker) {
+    walker.goUntil();
 
-    let currentCode = walker.source.charCodeAt(walker.index)
-    switch(currentCode){
+    var currentCode = walker.source.charCodeAt(walker.index);
+    switch (currentCode) {
         case 33: // !
         case 43: // +
         case 45: // -
-            walker.index++
-            return postUnaryExpr(readUnaryExpr(walker), currentCode)
-        case 34: //"
-        case 39: //'
-            return readString(walker)
+            walker.index++;
+            return postUnaryExpr(readUnaryExpr(walker), currentCode);
+
+        case 34: // "
+        case 39: // '
+            return readString(walker);
+
         case 48: // number
         case 49:
         case 50:
@@ -96,68 +106,80 @@ export function readUnaryExpr (walker) {
                 type: ExprType.NUMBER,
                 value: +(walker.match(/[0-9]+(\.[0-9]+)?/g, 1)[0])
             };
-        case 40: //(
-            return readParenthesizedExpr(walker)
-        //数组
-        case 91: //[
-            walker.index++
-            let arrItems = []
-            while(!walker.goUntil(93)){ //]
-                let item = {}
-                arrItems.push(item)
 
-                if(walker.source.charCodeAt(walker.index) === 46 && walker.match(/\.\.\.\s*/g)){
-                    item.spread = true
+        case 40: // (
+            return readParenthesizedExpr(walker);
+
+        // array literal
+        case 91: // [
+            walker.index++;
+            var arrItems = [];
+            while (!walker.goUntil(93)) { // ]
+                var item = {};
+                arrItems.push(item);
+
+                if (walker.source.charCodeAt(walker.index) === 46 && walker.match(/\.\.\.\s*/g)) {
+                    item.spread = true;
                 }
 
-                item.expr = readTertiaryExpr(walker)
-                walker.goUntil(44) // ,
+                item.expr = readTertiaryExpr(walker);
+                walker.goUntil(44); // ,
             }
 
             return {
                 type: ExprType.ARRAY,
                 items: arrItems
-            }
-        case 123: //对象
-            walker.index++
-            let objItems = []
+            };
 
-            while(!walker.goUntil(125)){ // }
-                let item = {}
-                objItems.push(item)
+        // object literal
+        case 123: // {
+            walker.index++;
+            var objItems = [];
 
-                if(walker.source.charCodeAt(walker.index) === 46 && walker.match(/\.\.\.\s*/g)){
-                    item.spread = true
-                    item.expr = readTertiaryExpr(walker)
-                }else{
-                    let walkerIndexBeforeName = walker.index
+            while (!walker.goUntil(125)) { // }
+                var item = {};
+                objItems.push(item);
 
-                    item.name = readUnaryExpr(walker)
+                if (walker.source.charCodeAt(walker.index) === 46 && walker.match(/\.\.\.\s*/g)) {
+                    item.spread = true;
+                    item.expr = readTertiaryExpr(walker);
+                }
+                else {
+                    // #[begin] error
+                    var walkerIndexBeforeName = walker.index;
+                    // #[end]
 
-                    if(item.name.type > 4){
-                        throw new Error('[SAN FATAL] unexpect object name: '
-                        + walker.source.slice(walkerIndexBeforeName, walker.index))
+                    item.name = readUnaryExpr(walker);
+
+                    // #[begin] error
+                    if (item.name.type > 4) {
+                        throw new Error(
+                            '[SAN FATAL] unexpect object name: '
+                            + walker.source.slice(walkerIndexBeforeName, walker.index)
+                        );
+                    }
+                    // #[end]
+
+                    if (walker.goUntil(58)) { // :
+                        item.expr = readTertiaryExpr(walker);
+                    }
+                    else {
+                        item.expr = item.name;
                     }
 
-                    if(walker.goUntil(58)){ // :
-                        item.expr = readTertiaryExpr(walker)
-                    }else {
-                        item.expr = item.name
-                    }
-
-                    if(item.name.type === ExprType.ACCESSOR ){
-                        item.name = item.name.paths[0]
+                    if (item.name.type === ExprType.ACCESSOR) {
+                        item.name = item.name.paths[0];
                     }
                 }
 
-                walker.goUntil(44) // ,
+                walker.goUntil(44); // ,
             }
 
             return {
                 type: ExprType.OBJECT,
                 items: objItems
-            }
+            };
     }
 
-    return readCall(walker)
+    return readCall(walker);
 }
