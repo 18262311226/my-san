@@ -37,10 +37,10 @@ Walker.prototype.goUntil = function (charCode) {
     let code
     while(this.index < this.len && (code = this.source.charCodeAt(this.index))){
         switch(code){
-            case 32:
-            case 9:
-            case 13:
-            case 10:
+            case 32: //空格
+            case 9: //制表
+            case 13: // \r
+            case 10: // \n
                 this.index++
                 break;
             default:
