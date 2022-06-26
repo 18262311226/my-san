@@ -64,6 +64,7 @@ Walker.prototype.match = function (reg, isMatchStart) {
     reg.lastIndex = this.index
 
     let match = reg.exec(this.source)
+    console.log('match', match)
 
     if(match && (!isMatchStart || this.index === match.index)){
         this.index = reg.lastIndex
