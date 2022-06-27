@@ -16,14 +16,16 @@
  * @param {Walker} walker 源码读取对象
  * @return {string}
  */
-export function readIdent(walker) {
+export function readIdent(walker) { 
+    //匹配变量名称
     var match = walker.match(/\s*([\$0-9a-z_]+)/ig, 1);
 
     // #[begin] error
+    //如果match为空，证明没有匹配到，直接抛出异常
     if (!match) {
         throw new Error('[SAN FATAL] expect an ident: ' + walker.source.slice(walker.index));
     }
     // #[end]
-
+    //返回匹配到的结果
     return match[1];
 }

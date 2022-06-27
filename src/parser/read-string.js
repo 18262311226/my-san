@@ -16,13 +16,14 @@
  * @return {Object}
  */
 export function readString(walker) {
-    var startCode = walker.source.charCodeAt(walker.index);
+    var startCode = walker.source.charCodeAt(walker.index); //拿到当前字符的编码
     var value = "";
     var charCode;
 
+    //拿到下一个字符编码，有就开始循环
     walkLoop: while ((charCode = walker.nextCode())) {
         switch (charCode) {
-            case 92: // \
+            case 92: // \ 
                 charCode = walker.nextCode();
 
                 switch (charCode) {

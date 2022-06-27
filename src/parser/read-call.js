@@ -19,8 +19,8 @@ import { readTertiaryExpr } from './read-tertiary-expr.js';
  * @return {Object}
  */
 export function readCall(walker, defaultArgs) {
-    walker.goUntil();
-    var result = readAccessor(walker);
+    walker.goUntil();//跳过空白符，制表符
+    var result = readAccessor(walker);//进入对象访问解析函数，并拿到结果
 
     var args;
     if (walker.goUntil(40)) { // (
