@@ -16,8 +16,8 @@ import { readUnaryExpr } from './read-unary-expr.js';
  * @return {Object}
  */
 export function readMultiplicativeExpr(walker) {
-    var expr = readUnaryExpr(walker);
-
+    var expr = readUnaryExpr(walker); //解析一元表达式开始，并拿到返回结果
+    //这里和加减解析一样
     while (1) {
         walker.goUntil();
 

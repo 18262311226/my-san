@@ -23,10 +23,10 @@ export function readCall(walker, defaultArgs) {
     var result = readAccessor(walker);//进入对象访问解析函数，并拿到结果
 
     var args;
-    if (walker.goUntil(40)) { // (
-        args = [];
+    if (walker.goUntil(40)) { // ( index跳过空白，指标符找到左括号
+        args = []; //
 
-        while (!walker.goUntil(41)) { // )
+        while (!walker.goUntil(41)) { // ) 
             args.push(readTertiaryExpr(walker));
             walker.goUntil(44); // ,
         }

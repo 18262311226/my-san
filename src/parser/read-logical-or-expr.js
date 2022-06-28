@@ -16,12 +16,13 @@ import { readLogicalANDExpr } from './read-logical-and-expr.js';
  * @return {Object}
  */
 export function readLogicalORExpr(walker) {
-    var expr = readLogicalANDExpr(walker);
+    var expr = readLogicalANDExpr(walker); //从与运算解析开始向下
     walker.goUntil();
 
     if (walker.source.charCodeAt(walker.index) === 124) { // |
-        if (walker.nextCode() === 124) {
+        if (walker.nextCode() === 124) { //如果还是| 则是或运算
             walker.index++;
+            //返回二元表达式
             return {
                 type: ExprType.BINARY,
                 operator: 248,
@@ -31,6 +32,6 @@ export function readLogicalORExpr(walker) {
 
         walker.index--;
     }
-
+    //不是或运算则返回与解析函数返回的结果
     return expr;
 }

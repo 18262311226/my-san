@@ -17,7 +17,7 @@ import { readRelationalExpr } from './read-relational-expr.js';
  * @return {Object}
  */
 export function readEqualityExpr(walker) {
-    var expr = readRelationalExpr(walker);
+    var expr = readRelationalExpr(walker);//从关系表达式解析函数开始，并拿到返回结果
     walker.goUntil();
 
     var code = walker.source.charCodeAt(walker.index);
@@ -30,7 +30,7 @@ export function readEqualityExpr(walker) {
                     code += 61;
                     walker.index++;
                 }
-
+                //返回二元表达式结果
                 return {
                     type: ExprType.BINARY,
                     operator: code,
@@ -40,6 +40,6 @@ export function readEqualityExpr(walker) {
 
             walker.index--;
     }
-
+    //如果不是相等则返回关系表达式函数返回的结果
     return expr;
 }

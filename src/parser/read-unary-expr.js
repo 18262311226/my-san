@@ -10,7 +10,7 @@ import { ExprType } from './expr-type.js';
 import {readString } from './read-string.js';
 import { readCall } from './read-call.js';
 import { readParenthesizedExpr } from './read-parenthesized-expr.js';
-import { readTertiaryExpr } from './read-tertiary-expr.js';
+import { readTertiaryExpr } from './read-tertiary-expr.js'; 
 
 function postUnaryExpr(expr, operator) {
     switch (operator) {
@@ -78,9 +78,10 @@ function postUnaryExpr(expr, operator) {
  * @return {Object}
  */
 export function readUnaryExpr(walker) {
-    walker.goUntil();
+    walker.goUntil();//跳过空白，制表符
 
     var currentCode = walker.source.charCodeAt(walker.index);
+    //一元表达式也有可能出现前面带符号的
     switch (currentCode) {
         case 33: // !
         case 43: // +

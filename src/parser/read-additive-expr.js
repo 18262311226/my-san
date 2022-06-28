@@ -18,9 +18,9 @@ import { readMultiplicativeExpr } from './read-multiplicative-expr.js';
  * @return {Object}
  */
 export function readAdditiveExpr(walker) {
-    var expr = readMultiplicativeExpr(walker);
+    var expr = readMultiplicativeExpr(walker);//从乘除取余开始，并拿到返回结果
 
-    while (1) {
+    while (1) {//这个循环有点多余，不知道啥意思，也只循环一次
         walker.goUntil();
         var code = walker.source.charCodeAt(walker.index);
 
@@ -38,6 +38,6 @@ export function readAdditiveExpr(walker) {
 
         break;
     }
-
+    //不是加减则返回乘除函数结果
     return expr;
 }
