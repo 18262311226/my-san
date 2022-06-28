@@ -9,5 +9,37 @@ import { ExprType } from '../parser/expr-type.js'
  * @return {*}
  */
 export function evalExpr (expr, data, owner) {
+    if(expr.value != null){
+        return expr.value
+    }
 
+    let value
+
+    switch (expr.type) {
+        case ExprType.NULL:
+            return null
+        case ExprType.UNARY:
+            value = evalExpr(expr.expr, data, owner)
+            switch(expr.operator){
+                case 33: //如果是 ！
+                    value = !value
+                    break
+                case 43: //如果是 +
+                    value = +value
+                    break
+                case 45: //如果是 -
+                    value = 0 - value
+                    break;
+            }
+            return value
+            case ExprType.BINARY:
+                value = evalExpr(expr.segs[0], data, owner)
+                let rightValue = evalExpr(expr.segs[1], data, owner)
+                switch(expr.operator){
+                    
+                }
+                return value
+        default:
+            break;
+    }
 }

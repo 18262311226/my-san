@@ -1,4 +1,5 @@
 import { parseExpr } from '../parser/parse-Expr.js'
+import { evalExpr } from './eval-expr.js'
 //响应式数据方法
 //parent为父级数据
 //data为初始数据
@@ -37,7 +38,7 @@ Data.prototype.get = function (expr, callee) {
         value = this.parent.get(expr, callee)
     }else{
         for(let i = 1,l = paths.length;value !== null && i < l;i++){
-            value = value[paths[i].value]
+            value = value[paths[i].value || evalExpr(paths[i], callee)]
         }
     }
 
