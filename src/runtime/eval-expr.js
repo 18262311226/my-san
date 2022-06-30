@@ -102,7 +102,7 @@ export function evalExpr (expr, data, owner) {
                 }
 
                 return value
-            case ExprType.OBJECT:
+            case ExprType.OBJECT: 
                 value = {}
 
                 for(let i = 0;i < expr.items.length;i++){
@@ -114,6 +114,34 @@ export function evalExpr (expr, data, owner) {
                     }else {
                         value[evalExpr(item.name, data, owner)] = itemValue
                     }
+                }
+
+                return value
+
+            case ExprType.INTERP:
+                value = evalExpr(expr.expr, data, owner)
+
+                if(owner){
+                    for(let i = 0;i < expr.filters.length;i++){
+                        let filter = expr.filters[i]
+                        let filterName = filter.name.paths[0].value
+
+                        switch(filterName){
+                            case 'url':
+                            case '_class':
+                            case '_style':
+                                break;
+                            case '_xclass':
+                            case '_xstyle':
+                                break;
+                            default:
+                                
+                        }
+                    }
+                }
+
+                if(value == null){
+                    value = ''
                 }
 
                 return value
