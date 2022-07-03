@@ -37,7 +37,9 @@ Data.prototype.setTypeChecker = function (typeChecker) {
  * @param {Function} listener 监听函数
  */
 Date.prototype.listen = function (listener) {
-
+    if(typeof listener === 'function'){
+        this.listeners.push(listener)
+    }
 }
 
 /**
@@ -46,7 +48,13 @@ Date.prototype.listen = function (listener) {
  * @param {Function} listener 监听函数
  */
 Date.prototype.unlisten = function (listener) {
+    let len = this.listeners.length
 
+    while(len--){
+        if(!listener || this.listeners[len] === listener){
+            this.listeners.splice(len, 1)
+        }
+    }
 }
 
 /**
@@ -55,7 +63,14 @@ Date.prototype.unlisten = function (listener) {
  * @param {Object} change 变更信息对象
  */
 Data.prototype.fire = function (change) {
+    //这段目前看不明白
+    if (change.option.silent || change.option.silence || change.option.quiet) {
+        return;
+    }
 
+    for(let i = 0;i < this.listeners.length;i++){
+        this.listeners[i].call(this, change)
+    }
 }
 
 //该方法为获取数据
@@ -68,10 +83,12 @@ Data.prototype.fire = function (change) {
  */
 Data.prototype.get = function (expr, callee) {
     let value = this.raw
+
     //判断第一个参数有没有传，没传直接返回整个数据
     if(!expr){
         return value
     }
+
     //不是对象我们需要对他进行处理，得到数据路径
     if(typeof expr !== 'object'){
         expr = parseExpr(expr)
@@ -125,6 +142,7 @@ function immutableSet (source, exprPaths, pathsStart, pathsLen, value, data) {
         result[prop] = immutableSet(source[prop], exprPaths, pathsStart + 1, pathsLen, value, data)
     }else if(typeof source === 'object'){
         result = {}
+
         let needAssigned = true
 
         for(let key in source){
@@ -183,6 +201,7 @@ Data.prototype.set = function (expr, value, option) {
     }
 
     let prop = expr.paths[0].value
+
     this.raw[prop] = immutableSet(this.raw[prop], expr.paths, 1, expr.paths.length, value, this)
 
     this.fire({
@@ -193,6 +212,83 @@ Data.prototype.set = function (expr, value, option) {
     })
 
     this.checkDataTypes()
+}
+
+/**
+ * 批量设置数据
+ *
+ * @param {Object} source 待设置的数据集
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ */
+Date.prototype.assign = function (source, option) {
+    option = option || {}
+
+    for(let key in source){
+        this.set({
+            type: ExprType.ACCESSOR,
+            paths: [
+                {
+                    type: ExprType.STRING,
+                    value: key
+                }
+            ]
+        }, source[key], option)
+    }
+}
+
+/**
+ * 合并更新数据项
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {Object} source 待合并的数据
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ */
+Date.prototype.merge = function (expr, source, option) {
+    option = option || {}
+
+    let exprRaw = expr
+
+    expr = parseExpr(expr)
+
+    if (expr.type !== ExprType.ACCESSOR) {
+        throw new Error('[SAN ERROR] Invalid Expression in Data merge: ' + exprRaw);
+    }
+
+    if (typeof this.get(expr) !== 'object') {
+        throw new Error('[SAN ERROR] Merge Expects a Target of Type \'object\'; got ' + typeof oldValue);
+    }
+
+    if (typeof source !== 'object') {
+        throw new Error('[SAN ERROR] Merge Expects a Source of Type \'object\'; got ' + typeof source);
+    }
+
+    for(let key in source){
+        this.set({
+            type: ExprType.ACCESSOR,
+            paths: expr.paths.concat(
+                [
+                    {
+                        type: ExprType.STRING,
+                        value: key
+                    }
+                ]
+            )
+        }, source[key], option)
+    }
+}
+
+/**
+ * 基于更新函数更新数据项
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {Function} fn 数据处理函数
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ */
+Date.prototype.apply = function (expr, fn, option) {
+
 }
 
 export default Data
