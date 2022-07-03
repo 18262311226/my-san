@@ -19,8 +19,11 @@
             },
             age: '18'
         })
-        let value = obj.get("people.arr.length")
+        let value = obj.get("people.arr[1]")
         console.log(value)
+        value = value + 3
+        obj.set("people.arr[1]", value)
+        console.log(obj.get("people.arr"))
     </script>
 </body>
 </html>

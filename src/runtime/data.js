@@ -182,7 +182,7 @@ Data.prototype.set = function (expr, value, option) {
         paths: expr.paths.slice(0)
     }
 
-    prop = expr.paths[0].value
+    let prop = expr.paths[0].value
     this.raw[prop] = immutableSet(this.raw[prop], expr.paths, 1, expr.paths.length, value, this)
 
     this.fire({
