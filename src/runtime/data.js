@@ -7,6 +7,7 @@ import { DataChangeType } from './data-change-type.js'
 //parent为父级数据
 //data为初始数据
 //listeners为收集数据发生改变的容器
+
 function Data (data, parent) {
     this.parent = parent
     this.raw = data || {}
@@ -16,6 +17,7 @@ function Data (data, parent) {
 /**
  * DataTypes 检测
  */
+
  Data.prototype.checkDataTypes = function () {
     if (this.typeChecker) {
         this.typeChecker(this.raw);
@@ -27,6 +29,7 @@ function Data (data, parent) {
  *
  * @param  {Function} typeChecker 类型校验器
  */
+
 Data.prototype.setTypeChecker = function (typeChecker) {
     this.typeChecker = typeChecker;
 };
@@ -36,6 +39,7 @@ Data.prototype.setTypeChecker = function (typeChecker) {
  *
  * @param {Function} listener 监听函数
  */
+
 Date.prototype.listen = function (listener) {
     if(typeof listener === 'function'){
         this.listeners.push(listener)
@@ -47,6 +51,7 @@ Date.prototype.listen = function (listener) {
  *
  * @param {Function} listener 监听函数
  */
+
 Date.prototype.unlisten = function (listener) {
     let len = this.listeners.length
 
@@ -62,6 +67,7 @@ Date.prototype.unlisten = function (listener) {
  *
  * @param {Object} change 变更信息对象
  */
+
 Data.prototype.fire = function (change) {
     //这段目前看不明白
     if (change.option.silent || change.option.silence || change.option.quiet) {
@@ -81,6 +87,7 @@ Data.prototype.fire = function (change) {
  * @param {Data?} callee 当前数据获取的调用环境
  * @return {*}
  */
+
 Data.prototype.get = function (expr, callee) {
     let value = this.raw
 
@@ -122,6 +129,7 @@ Data.prototype.get = function (expr, callee) {
  * @param {Data} data 对应的Data对象
  * @return {*} 变更后的新数据
  */
+
 function immutableSet (source, exprPaths, pathsStart, pathsLen, value, data) {
     if(pathsStart >= pathsLen){
         return value
@@ -180,6 +188,7 @@ function immutableSet (source, exprPaths, pathsStart, pathsLen, value, data) {
  * @param {Object=} option 设置参数
  * @param {boolean} option.silent 静默设置，不触发变更事件
  */
+
 Data.prototype.set = function (expr, value, option) {
     option = option || {}
 
@@ -221,6 +230,7 @@ Data.prototype.set = function (expr, value, option) {
  * @param {Object=} option 设置参数
  * @param {boolean} option.silent 静默设置，不触发变更事件
  */
+
 Date.prototype.assign = function (source, option) {
     option = option || {}
 
@@ -245,6 +255,7 @@ Date.prototype.assign = function (source, option) {
  * @param {Object=} option 设置参数
  * @param {boolean} option.silent 静默设置，不触发变更事件
  */
+
 Date.prototype.merge = function (expr, source, option) {
     option = option || {}
 
@@ -287,8 +298,205 @@ Date.prototype.merge = function (expr, source, option) {
  * @param {Object=} option 设置参数
  * @param {boolean} option.silent 静默设置，不触发变更事件
  */
-Date.prototype.apply = function (expr, fn, option) {
 
+Date.prototype.apply = function (expr, fn, option) {
+    let exprRaw = expr
+
+    expr = parseExpr(expr)
+
+    if(expr.type !== ExprType.ACCESSOR){
+        throw new Error('[SAN ERROR] Invalid Expression in Data apply: ' + exprRaw);
+    }
+
+    let oldValue = this.get(expr)
+
+    if(typeof fn !== 'function'){
+        throw new Error(
+            '[SAN ERROR] Invalid Argument\'s Type in Data apply: '
+            + 'Expected Function but got ' + typeof fn
+        );
+    }
+
+    this.set(expr, fn(oldValue), option)
+}
+
+/**
+ * 数组数据项splice操作
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {Array} args splice 接受的参数列表，数组项与Array.prototype.splice的参数一致
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ * @return {Array} 新数组
+ */
+
+Date.prototype.splice = function (expr, args, option) {
+    option = option || {}
+
+    let exprRaw = expr
+
+    expr = parseExpr(expr)
+
+    // #[begin] error
+    if (expr.type !== ExprType.ACCESSOR) {
+        throw new Error('[SAN ERROR] Invalid Expression in Data splice: ' + exprRaw);
+    }
+    // #[end]
+
+    expr = {
+        type: ExprType.ACCESSOR,
+        paths: expr.paths.slice(0)
+    }
+
+    let target = this.get(expr)
+    let returnValue = []
+
+    if (target instanceof Array) {
+        let index = args[0]
+        let len = target.length
+
+        if(index > len){
+            index = len
+        }else if (index < 0) {
+            index = len + index
+
+            if (index < 0) {
+                index = 0
+            }
+        }
+
+        let newArray = target.slice(0)
+
+        returnValue = newArray.splice.apply(newArray, args)
+
+        this.raw = this.immutableSet(this.raw, expr.paths, 0, expr.paths.length, newArray, this)
+
+        this.fire({
+            expr: expr,
+            type: DataChangeType.SPLICE,
+            index: index,
+            deleteCount: newArray.length,
+            value: returnValue,
+            insertions: args.slice(2),
+            option: option
+        })
+    }
+
+    // #[begin] error
+    this.checkDataTypes();
+    // #[end]
+
+    return returnValue
+}
+
+/**
+ * 数组数据项push操作
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {*} item 要push的值
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ * @return {number} 新数组的length属性
+ */
+
+Data.prototype.push = function (expr, item, option) {
+    let target = this.get(expr)
+
+    if(target instanceof Array){
+        this.splice(expr, [target.length, 0, item], option)
+        return target.length + 1
+    }
+}
+
+/**
+ * 数组数据项pop操作
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ * @return {*}
+ */
+
+Date.prototype.pop = function (expr, option) {
+    let target = this.get(expr)
+
+    if(target instanceof Array){
+        let len = target.length
+
+        if(len){
+            return this.splice(expr, [len - 1, 1], option)[0]
+        }
+    }
+}
+
+/**
+ * 数组数据项shift操作
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ * @return {*}
+ */
+
+Date.prototype.shift = function (expr, option) {
+    return this.splice(expr, [0, 1], option)[0];
+}
+
+/**
+ * 数组数据项unshift操作
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {*} item 要unshift的值
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ * @return {number} 新数组的length属性
+ */
+
+Date.prototype.unshift = function (expr, item, option) {
+    let target = this.get(expr)
+
+    if(target instanceof Array){
+        this.splice(expr, [0, 0, item], option)
+
+        return target.length + 1
+    }
+}
+
+/**
+ * 数组数据项移除操作
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {number} index 要移除项的索引
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ */
+
+Date.prototype.removeAt = function (expr, index, option) {
+    this.splice(expr, [index, 1], option);
+}
+
+/**
+ * 数组数据项移除操作
+ *
+ * @param {string|Object} expr 数据项路径
+ * @param {*} value 要移除的项
+ * @param {Object=} option 设置参数
+ * @param {boolean} option.silent 静默设置，不触发变更事件
+ */
+
+Date.prototype.remove = function (expr, value, option) {
+    let target = this.get(expr)
+
+    if(target instanceof Array){
+        let len = target.length
+
+        while(len--){
+            if(target[len] === value){
+                this.splice(expr, [len, 1], option)
+                break
+            }
+        }
+    }
 }
 
 export default Data
