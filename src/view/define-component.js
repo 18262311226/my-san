@@ -10,5 +10,22 @@ import { inherits } from '../utils/inherits.js'
  */
 
 export function defineComponent (proto, SuperComponent) {
+    if(typeof proto === 'function'){
+        return
+    }
 
-}
+    if(typeof proto !== 'object'){
+        throw new Error('[SAN FATAL] defineComponent need a plain object.');
+    }
+
+    SuperComponent = SuperComponent || Component
+
+    function ComponentClass (option) {
+        SuperComponent.call(this, option)
+    }
+
+    ComponentClass.prototype = proto
+    inherits(ComponentClass, SuperComponent)
+
+    return ComponentClass
+}   
