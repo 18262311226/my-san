@@ -7,6 +7,11 @@
 
 import lifeCycle from "./life-cycle";
 import guid from '../utils/guid.js'
+import { defineComponent } from "./define-component";
+import { preheatANode } from './preheat-a-node.js'
+import { parseComponentTemplate } from './parse-component-template'
+import { unpackANode } from '../parser/unpack-anode.js'
+import { ComponentLoader } from './component-loader.js'
 
 export function Component (options) {
     for(let key in Component.prototype){
@@ -65,11 +70,33 @@ export function Component (options) {
     let proto = clazz.prototype
 
     if(!proto.hasOwnProperty('_cmptReady')){
+        proto.components = clazz.components || proto.components || {}
+        let components = proto.components
 
+        for(let key in components){
+            let cmptClass = components[key]
+
+            if(typeof cmptClass === 'object' && !(cmptClass instanceof ComponentLoader)){
+                components[key] = defineComponent(cmptClass)
+            }else if(cmptClass === 'self'){
+                components[key] = clazz
+            }
+        }
+
+        proto._cmptReady = 1
     }
 
     //compile
     if(!proto.hasOwnProperty('aNode')){
+        let aPack = clazz.aPack || proto.hasOwnProperty('aPack') && proto.aPack
 
+        if(aPack){
+            proto.aPack = unpackANode(aPack)
+            clazz.aPack = proto.aPack = null
+        }else {
+            proto.aNode = parseComponentTemplate(clazz)
+        }
     }
+
+    preheatANode(proto.aNode, this)
 }
